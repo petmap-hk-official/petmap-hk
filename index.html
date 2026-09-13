@@ -5,29 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PetMap HK - 香港寵物友善地圖</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- 引入 Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root { --primary-color: #FF7A00; --bg-light: #F8F9FA; --border-color: #E9ECEF; --text-dark: #212529; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-    body { display: flex; height: 100vh; overflow: hidden; color: var(--text-dark); }
-    #sidebar { width: 380px; height: 100%; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; box-shadow: 2px 0 8px rgba(0,0,0,0.05); }
+    body { display: flex; height: 100vh; color: var(--text-dark); }
+    #sidebar { width: 380px; height: 100%; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
     .header { padding: 16px; background: var(--primary-color); color: white; display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-size: 1.1rem; }
     .btn-add { background: white; color: var(--primary-color); border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; }
-    .controls { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; }
+    .controls { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; }
     .search-input { width: 100%; padding: 10px 14px; border: 1px solid #CED4DA; border-radius: 8px; outline: none; }
-    .filter-tags { display: flex; gap: 8px; }
-    .btn-filter { padding: 6px 14px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--bg-light); cursor: pointer; font-size: 0.85rem; }
+    .filter-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn-filter { padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--bg-light); cursor: pointer; font-size: 0.85rem; }
     .btn-filter.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+    .region-select { padding: 6px 10px; border: 1px solid #CED4DA; border-radius: 20px; background: white; font-size: 0.85rem; outline: none; cursor: pointer; }
     .place-list { flex: 1; overflow-y: auto; padding: 12px; }
-    .place-card { padding: 14px; border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 12px; cursor: pointer; }
+    .place-card { padding: 14px; border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
+    .place-card:hover { border-color: var(--primary-color); background: #FFF9F5; }
     .place-name { font-weight: bold; font-size: 1.05rem; margin-bottom: 4px; }
     .place-meta { font-size: 0.82rem; color: #6C757D; margin-bottom: 8px; }
-    .badge { font-size: 0.72rem; padding: 2px 6px; background: #FFE8D6; color: #D9480F; border-radius: 4px; }
+    .badge { font-size: 0.72rem; padding: 2px 6px; background: #FFE8D6; color: #D9480F; border-radius: 4px; display: inline-block; }
     #map { flex: 1; height: 100%; }
-
-    /* Modal 彈出視窗：新增地點表單 */
+    
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
     .modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
     .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; }
@@ -43,159 +43,189 @@
     </div>
 
     <div class="controls">
-      <input type="text" id="searchInput" class="search-input" placeholder="搜尋地點或地區...">
+      <input type="text" id="searchInput" class="search-input" placeholder="搜尋地點或地區..." oninput="filterPlaces()">
+      
       <div class="filter-tags">
-        <button class="btn-filter active" data-type="all">全部</button>
-        <button class="btn-filter" data-type="restaurant">🍽️ 餐廳</button>
-        <button class="btn-filter" data-type="park">🌳 公園</button>
+        <button class="btn-filter active" data-type="all" onclick="setCategoryFilter('all', this)">全部</button>
+        <button class="btn-filter" data-type="restaurant" onclick="setCategoryFilter('restaurant', this)">🍽️ 餐廳</button>
+        <button class="btn-filter" data-type="park" onclick="setCategoryFilter('park', this)">🌳 公園</button>
+        
+        <select id="regionSelect" class="region-select" onchange="filterPlaces()">
+          <option value="all">📍 全港區域</option>
+          <option value="hk">🇭🇰 香港島</option>
+          <option value="kln">🏙️ 九龍</option>
+          <option value="nt">⛰️ 新界</option>
+        </select>
       </div>
     </div>
 
-    <div class="place-list" id="placeList">載入中...</div>
+    <div id="placeList" class="place-list"></div>
   </div>
 
   <div id="map"></div>
 
-  <!-- 新增地點彈出表單 -->
-  <div class="modal" id="addModal">
+  <!-- Modal 彈出表單 -->
+  <div id="modal" class="modal">
     <div class="modal-content">
-      <h2>新增/推薦寵物友善地點</h2>
-      <input type="text" id="formName" placeholder="地點名稱 (如: Hooman Coffee)" required>
-      <select id="formCategory">
-        <option value="restaurant">🍽️ 寵物餐廳</option>
-        <option value="park">🌳 寵物公園/綠地</option>
+      <h2>新增 / 推薦寵物友善地點</h2>
+      <input type="text" id="addName" placeholder="地點名稱 (如: CoCo Espresso)" required>
+      <select id="addCategory">
+        <option value="restaurant">餐廳</option>
+        <option value="park">公園 / 露天設施</option>
       </select>
-      <input type="text" id="formDistrict" placeholder="地區 (如: 尖沙咀)">
-      <input type="text" id="formAddress" placeholder="詳細地址">
-      <input type="number" step="any" id="formLat" placeholder="緯度 Lat (例: 22.3006)">
-      <input type="number" step="any" id="formLng" placeholder="經度 Lng (例: 114.1593)">
-      <textarea id="formComment" placeholder="填寫推薦評論或特色介紹..."></textarea>
+      <input type="text" id="addDistrict" placeholder="地區 (如: 葵青區 / 中西區)" required>
+      <input type="text" id="addAddress" placeholder="詳細地址">
+      <input type="number" step="any" id="addLat" placeholder="緯度 Lat (如: 22.3642)" required>
+      <input type="number" step="any" id="addLng" placeholder="經度 Lng (如: 114.1331)" required>
+      <textarea id="addComment" placeholder="推薦理由或備註..."></textarea>
       
       <div class="form-btns">
-        <button type="button" onclick="closeModal()">取消</button>
-        <button type="button" style="background:var(--primary-color);color:white;border:none;padding:6px 12px;border-radius:4px;" onclick="submitPlace()">提交審核</button>
+        <button onclick="closeModal()" style="padding: 6px 12px; background: #ccc; border:none; border-radius:6px; cursor:pointer;">取消</button>
+        <button onclick="submitPlace()" style="padding: 6px 12px; background: var(--primary-color); color:white; border:none; border-radius:6px; cursor:pointer;">提交審核</button>
       </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // 已將你的專案連結與發布 KEY 自動帶入
-    const SUPABASE_URL = 'https://jwkuiiqmdvzcziktogyt.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable__ymynGSa7V7lM07uijuNkQ_U4nX3yJd'; 
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = 'https://xlltkygvwuhhlyryebgw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_gC56116_P_f1Wb8r96F4-A_xlltkygvwuhhlyryebgw';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 初始化 CartoDB 淺色地圖
-    const map = L.map('map').setView([22.3300, 114.1700], 12);
-   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-  maxZoom: 19,
-  attribution: 'Tiles &copy; Esri'
-}).addTo(map);
-
+    let map, markersGroup;
     let allPlaces = [];
-    let currentMarkers = [];
-    let currentFilterType = 'all';
+    let currentCategory = 'all';
 
-    // 1. 從 Supabase 讀取「已通過審核 (status = approved)」的地點
+    // 初始化地圖
+    function initMap() {
+      map = L.map('map').setView([22.3193, 114.1694], 11);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri'
+      }).addTo(map);
+
+      markersGroup = L.layerGroup().addTo(map);
+      loadPlacesFromSupabase();
+    }
+
+    // 從 Supabase 讀取 approved 資料
     async function loadPlacesFromSupabase() {
-      const { data, error } = await _supabase
+      const { data, error } = await supabaseClient
         .from('places')
         .select('*')
         .eq('status', 'approved');
 
       if (error) {
-        console.error('Error fetching data:', error);
-        document.getElementById('placeList').innerHTML = '讀取資料失敗，請檢查 Supabase 設定';
+        console.error('Error fetching places:', error);
         return;
       }
 
       allPlaces = data || [];
-      filterAndRender();
+      filterPlaces();
     }
 
-    // 渲染地圖與清單
-    function filterAndRender() {
-      currentMarkers.forEach(m => map.removeLayer(m));
-      currentMarkers = [];
+    // 地區對應判斷 (18區歸類為 港島/九龍/新界)
+    function getRegion(district) {
+      if (!district) return '';
+      const hk = ['中西區', '灣仔區', '東區', '南區'];
+      const kln = ['油尖旺區', '深水埗區', '九龍城區', '黃大仙區', '觀塘區', '尖沙咀', '葵涌'];
+      const nt = ['葵青區', '荃灣區', '屯門區', '元朗區', '北區', '大埔區', '沙田區', '西貢區', '離島區'];
 
-      const searchKey = document.getElementById('searchInput').value.toLowerCase();
-      const listContainer = document.getElementById('placeList');
-      listContainer.innerHTML = '';
+      if (hk.some(d => district.includes(d))) return 'hk';
+      if (kln.some(d => district.includes(d))) return 'kln';
+      if (nt.some(d => district.includes(d))) return 'nt';
+      return '';
+    }
 
-      const filtered = allPlaces.filter(p => {
-        const matchType = currentFilterType === 'all' || p.category === currentFilterType;
-        const matchSearch = (p.name || '').toLowerCase().includes(searchKey) || (p.district || '').toLowerCase().includes(searchKey);
-        return matchType && matchSearch;
+    // 類別按鈕切換
+    function setCategoryFilter(category, btnElement) {
+      document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+      btnElement.classList.add('active');
+      currentCategory = category;
+      filterPlaces();
+    }
+
+    // 綜合篩選（搜尋 + 類別 + 地區）
+    function filterPlaces() {
+      const searchVal = document.getElementById('searchInput').value.toLowerCase();
+      const selectedRegion = document.getElementById('regionSelect').value;
+
+      const filtered = allPlaces.filter(place => {
+        const matchSearch = (place.name || '').toLowerCase().includes(searchVal) || 
+                            (place.district || '').toLowerCase().includes(searchVal) ||
+                            (place.address || '').toLowerCase().includes(searchVal);
+        const matchCategory = currentCategory === 'all' || place.category === currentCategory;
+        const matchRegion = selectedRegion === 'all' || getRegion(place.district) === selectedRegion;
+
+        return matchSearch && matchCategory && matchRegion;
       });
 
-      if (filtered.length === 0) {
-        listContainer.innerHTML = '<div style="color:#888;padding:10px;">沒有找到相關地點</div>';
+      renderListAndMarkers(filtered);
+    }
+
+    // 渲染清單與地圖標記
+    function renderListAndMarkers(places) {
+      const listEl = document.getElementById('placeList');
+      listEl.innerHTML = '';
+      markersGroup.clearLayers();
+
+      if (places.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; color:#888; margin-top:20px;">沒有找到符合條件的地點</div>';
         return;
       }
 
-      filtered.forEach(p => {
-        if (p.lat && p.lng) {
-          const marker = L.marker([p.lat, p.lng]).addTo(map);
-          marker.bindPopup(`<b>${p.name}</b><br><span style="font-size:12px;color:#666">${p.address || ''}</span><p style="margin-top:4px;">${p.comment || ''}</p>`);
-          currentMarkers.push(marker);
+      places.forEach(place => {
+        // 渲染側邊欄卡片
+        const card = document.createElement('div');
+        card.className = 'place-card';
+        card.innerHTML = `
+          <div class="place-name">${place.name}</div>
+          <div class="place-meta">📍 ${place.district || '未填寫'} | 地址: ${place.address || '未填寫'}</div>
+          <span class="badge">${place.category === 'restaurant' ? '🍽️ 餐廳' : '🌳 公園'}</span>
+        `;
+        card.onclick = () => {
+          map.flyTo([place.lat, place.lng], 16);
+        };
+        listEl.appendChild(card);
 
-          const card = document.createElement('div');
-          card.className = 'place-card';
-          card.innerHTML = `
-            <div class="place-name">${p.name}</div>
-            <div class="place-meta">📍 ${p.district || '香港'} | ${p.address || ''}</div>
-            <span class="badge">${p.category === 'restaurant' ? '🍽️ 餐廳' : '🌳 公園'}</span>
-            <p style="font-size:0.85rem;margin-top:6px;color:#444;">${p.comment || ''}</p>
-          `;
-          card.onclick = () => { map.flyTo([p.lat, p.lng], 15); marker.openPopup(); };
-          listContainer.appendChild(card);
-        }
+        // 渲染地圖 Marker
+        const marker = L.marker([place.lat, place.lng])
+          .bindPopup(`<b>${place.name}</b><br>${place.address || ''}`);
+        markersGroup.addLayer(marker);
       });
     }
 
-    // 2. 訪客提交新地點至 Supabase (status 自動設為 pending)
+    // Modal 控制
+    function openModal() { document.getElementById('modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    // 提交新地點至 Supabase (預設 pending 狀態)
     async function submitPlace() {
-      const name = document.getElementById('formName').value;
-      if (!name) { alert('請填寫地點名稱！'); return; }
+      const name = document.getElementById('addName').value;
+      const category = document.getElementById('addCategory').value;
+      const district = document.getElementById('addDistrict').value;
+      const address = document.getElementById('addAddress').value;
+      const lat = parseFloat(document.getElementById('addLat').value);
+      const lng = parseFloat(document.getElementById('addLng').value);
+      const user_comment = document.getElementById('addComment').value;
 
-      const newPlace = {
-        name: name,
-        category: document.getElementById('formCategory').value,
-        district: document.getElementById('formDistrict').value,
-        address: document.getElementById('formAddress').value,
-        lat: parseFloat(document.getElementById('formLat').value) || 22.3000,
-        lng: parseFloat(document.getElementById('formLng').value) || 114.1700,
-        comment: document.getElementById('formComment').value,
-        status: 'pending' // 自動進入待審核狀態
-      };
+      if (!name || !lat || !lng) {
+        alert('請填寫完整的地點名稱與經緯度！');
+        return;
+      }
 
-      const { error } = await _supabase.from('places').insert([newPlace]);
+      const { data, error } = await supabaseClient.from('places').insert([{
+        name, category, district, address, lat, lng, user_comment, status: 'pending'
+      }]);
 
       if (error) {
         alert('提交失敗：' + error.message);
       } else {
-        alert('✅ 提交成功！資料已進入待審核清單，管理員批准後將會在線上顯示。');
+        alert('提交成功！等待管理員審核後即可在地圖上顯示。');
         closeModal();
       }
     }
 
-    // Modal 控制 logic
-    function openModal() { document.getElementById('addModal').style.display = 'flex'; }
-    function closeModal() { document.getElementById('addModal').style.display = 'none'; }
-
-    // 篩選按鈕事件
-    document.querySelectorAll('.btn-filter').forEach(btn => {
-      btn.onclick = (e) => {
-        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        currentFilterType = e.target.getAttribute('data-type');
-        filterAndRender();
-      };
-    });
-    document.getElementById('searchInput').oninput = filterAndRender;
-
-    // 頁面初始化
-    loadPlacesFromSupabase();
+    window.onload = initMap;
   </script>
 </body>
 </html>
