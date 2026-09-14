@@ -12,21 +12,24 @@
     body { display: flex; height: 100vh; color: var(--text-dark); overflow: hidden; }
     
     /* 側邊欄與收起動畫 */
-    #sidebar { 
-      width: 380px; 
-      height: 100%; 
-      background: white; 
-      border-right: 1px solid var(--border-color); 
-      display: flex; 
-      flex-direction: column; 
-      z-index: 1000; 
-      box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
-      position: relative;
-      transition: transform 0.3s ease-in-out;
-    }
-    #sidebar.collapsed {
-      transform: translateX(-100%);
-    }
+   #sidebar { 
+  width: 380px; 
+  height: 100%; 
+  background: white; 
+  border-right: 1px solid var(--border-color); 
+  display: flex; 
+  flex-direction: column; 
+  z-index: 1000; 
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
+  position: relative;
+  transition: margin-left 0.3s ease-in-out; /* 改用 margin-left 來平滑推移 */
+  margin-left: 0; /* 預設展開 */
+}
+
+/* 當側邊欄被收起時，將左外邊距拉向負的 380px，讓它完全隱藏且不留空白 */
+#sidebar.collapsed {
+  margin-left: -380px;
+}
 
     /* 淺灰色小三角形按鈕 */
     #toggleSidebarBtn {
