@@ -21,42 +21,51 @@
   flex-direction: column; 
   z-index: 1000; 
   box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
-  position: relative;
-  transition: margin-left 0.3s ease-in-out; /* 改用 margin-left 來平滑推移 */
-  margin-left: 0; /* 預設展開 */
+  position: absolute; /* 確保它是絕對定位 */
+  top: 0;
+  left: 0;
+  transition: transform 0.3s ease-in-out; /* 這裡改用 transform 最順暢 */
+  transform: translateX(0); /* 預設展開 */
 }
 
-/* 當側邊欄被收起時，將左外邊距拉向負的 380px，讓它完全隱藏且不留空白 */
+/* 當側邊欄被收起時，向左平移整個寬度 */
 #sidebar.collapsed {
-  margin-left: -380px;
+  transform: translateX(-380px);
 }
 
     /* 淺灰色小三角形按鈕 */
-    #toggleSidebarBtn {
-      position: absolute;
-      right: -28px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 28px;
-      height: 60px;
-      background-color: #e2e8f0;
-      border: 1px solid #cbd5e0;
-      border-left: none;
-      border-radius: 0 8px 8px 0;
-      color: #4a5568;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.08);
-      z-index: 1001;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.2s;
-    }
-    #toggleSidebarBtn:hover {
-      background-color: #cbd5e0;
-    }
+   #toggleSidebarBtn {
+  position: fixed;     /* 關鍵：改用 fixed 固定在螢幕上 */
+  left: 380px;         /* 預設剛好貼在 380px 側邊欄的右側邊緣 */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 60px;
+  background-color: #e2e8f0;
+  border: 1px solid #cbd5e0;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  color: #4a5568;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.08);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left 0.3s ease-in-out, background-color 0.2s; /* 讓按鈕跟隨側邊欄一起滑動 */
+}
+
+#toggleSidebarBtn:hover {
+  background-color: #cbd5e0;
+}
+
+/* 當側邊欄收起時，按鈕要跟著移動到畫面的最左邊（left: 0） */
+#sidebar.collapsed ~ #toggleSidebarBtn {
+  left: 0;
+  border-radius: 0 8px 8px 0; /* 保持右側圓角 */
+}
 
     .header { padding: 16px; background: var(--primary-color); color: white; display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-size: 1.1rem; }
@@ -84,14 +93,21 @@
 </head>
 <body>
 
+  <!-- 側邊欄容器 -->
   <div id="sidebar">
-    <!-- 淺灰色收起/展開按鈕 -->
-    <button id="toggleSidebarBtn" onclick="toggleSidebar()">◀</button>
-
     <div class="header">
       <h1>🐶 PetMap HK 寵物地圖</h1>
       <button class="btn-add" onclick="openModal()">+ 推薦地點</button>
     </div>
+    <!-- 裡面的搜尋、分類與清單保持不動 -->
+    <div class="controls">...</div>
+    <div id="placeList" class="place-list"></div>
+  </div>
+
+  <!-- 💡 按鈕移到 sidebar 外面，與 sidebar 並排 -->
+  <button id="toggleSidebarBtn" onclick="toggleSidebar()">◀</button>
+
+  <div id="map"></div>
 
     <div class="controls">
       <input type="text" id="searchInput" class="search-input" placeholder="搜尋地點或地區..." oninput="filterPlaces()">
