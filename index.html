@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),async=true,src='https://www.googletagmanager.com/gtm.js?id='+i+f.async;j.src.parentNode.insertBefore(j,f);
+  })(window,document,'script','layer','GTM-W3LVQP38');</script>
+  <!-- End Google Tag Manager -->
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PetMap HK - 香港寵物友善地圖</title>
@@ -97,6 +104,11 @@
   </style>
 </head>
 <body>
+
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W3LVQP38"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
 
   <!-- 側邊欄容器 -->
   <div id="sidebar">
@@ -273,7 +285,16 @@
         `;
         listEl.appendChild(card);
 
-        const marker = L.marker([place.lat, place.lng])
+        // 💡 根據分類設定對應的 Emoji 圖示
+        const iconEmoji = place.category === 'restaurant' ? '🍽️' : '🌲';
+        const customIcon = L.divIcon({
+          html: `<div style="font-size: 20px; line-height: 20px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">${iconEmoji}</div>`,
+          className: 'custom-emoji-marker',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        const marker = L.marker([place.lat, place.lng], { icon: customIcon })
           .bindPopup(`<b>${place.name}</b><br>${place.address || ''}<br><a href="${mapsUrl}" target="_blank" style="color:#3182ce; font-weight:bold; display:inline-block; margin-top:4px;">在 Google 地圖中開啟</a>`);
         markersGroup.addLayer(marker);
       });
