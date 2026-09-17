@@ -16,7 +16,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     body { display: flex; height: 100vh; color: var(--text-dark); overflow: hidden; position: relative; }
     
-    /* 側邊欄與收起動畫 */
+    /* 側邊欄與收起動畫（強制鎖定電腦版左右並排架構） */
     #sidebar { 
       width: 380px; 
       height: 100vh; 
@@ -87,6 +87,7 @@
     .place-meta { font-size: 0.82rem; color: #6C757D; margin-bottom: 8px; }
     .badge { font-size: 0.72rem; padding: 2px 6px; background: #FFE8D6; color: #D9480F; border-radius: 4px; display: inline-block; }
     
+    /* 讓地圖佔滿整個背景，手機也會在側邊欄下方展開 */
     #map { flex: 1; height: 100%; width: 100%; }
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
@@ -124,13 +125,13 @@
     <!-- 地點清單 -->
     <div id="placeList" class="place-list"></div>
 
-    <!-- 💡 側邊欄底部：只保留簡潔的文字提示與 IG 連結 -->
+    <!-- 側邊欄底部：只保留簡潔的文字提示與 IG 連結 -->
     <div style="padding: 12px; text-align: center; font-size: 0.85rem; border-top: 1px solid var(--border-color); color: #6c757d; background: #fff;">
       有任何建議？歡迎追蹤並私訊 <a href="https://www.instagram.com/petmap_hk?stkn=MTV5dGk3aGt4aDdjMw%3D%3D&utm_source=qr" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: none;">@petmap_hk</a>
     </div>
   </div>
 
-  <!-- 💡 獨立的收起/展開按鈕 -->
+  <!-- 獨立的收起/展開按鈕 -->
   <button id="toggleSidebarBtn" onclick="toggleSidebar()">◀</button>
 
   <div id="map"></div>
