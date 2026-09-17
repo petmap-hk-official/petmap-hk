@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PetMap HK - 香港寵物友善地圖</title>
   
+  <!-- 💡 App 主畫面圖標設定 -->
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
 
@@ -13,14 +14,12 @@
   <style>
     :root { --primary-color: #FF7A00; --bg-light: #F8F9FA; --border-color: #E9ECEF; --text-dark: #212529; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { display: flex; height: 100vh; color: var(--text-dark); overflow: hidden; position: relative; }
     
-    /* 💡 使用 100dvh 確保手機瀏覽器上下工具列不會擋住內容 */
-    body { display: flex; height: 100dvh; height: 100vh; color: var(--text-dark); overflow: hidden; position: relative; }
-    
-    /* 側邊欄預設（電腦版：固定左側，可收合） */
+    /* 側邊欄與收起動畫（強制鎖定電腦版左右並排架構） */
     #sidebar { 
       width: 380px; 
-      height: 100%; 
+      height: 100vh; 
       background: white; 
       border-right: 1px solid var(--border-color); 
       display: flex; 
@@ -34,10 +33,12 @@
       transform: translateX(0); 
     }
 
+    /* 當側邊欄被收起時，向左平移整個寬度 */
     #sidebar.collapsed {
       transform: translateX(-380px);
     }
 
+    /* 淺灰色小三角形按鈕 */
     #toggleSidebarBtn {
       position: fixed;
       left: 380px;
@@ -61,21 +62,24 @@
       transition: left 0.3s ease-in-out, background-color 0.2s;
     }
 
-    #toggleSidebarBtn:hover { background-color: #cbd5e0; }
-    #sidebar.collapsed ~ #toggleSidebarBtn { left: 0; }
+    #toggleSidebarBtn:hover {
+      background-color: #cbd5e0;
+    }
 
-    .header { padding: 14px 16px; background: var(--primary-color); color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    /* 當側邊欄收起時，按鈕要跟著移動到畫面的最左邊（left: 0） */
+    #sidebar.collapsed ~ #toggleSidebarBtn {
+      left: 0;
+    }
+
+    .header { padding: 16px; background: var(--primary-color); color: white; display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-size: 1.1rem; }
     .btn-add { background: white; color: var(--primary-color); border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; }
-    
-    .controls { padding: 14px 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+    .controls { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; }
     .search-input { width: 100%; padding: 10px 14px; border: 1px solid #CED4DA; border-radius: 8px; outline: none; }
     .filter-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .btn-filter { padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--bg-light); cursor: pointer; font-size: 0.85rem; }
     .btn-filter.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
     .region-select { padding: 6px 10px; border: 1px solid #CED4DA; border-radius: 20px; background: white; font-size: 0.85rem; outline: none; cursor: pointer; }
-    
-    /* 地點清單區塊：自動延展並可滾動 */
     .place-list { flex: 1; overflow-y: auto; padding: 12px; min-height: 0; }
     .place-card { padding: 14px; border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 12px; transition: 0.2s; background: #fff; }
     .place-card:hover { border-color: var(--primary-color); background: #FFF9F5; }
@@ -83,36 +87,18 @@
     .place-meta { font-size: 0.82rem; color: #6C757D; margin-bottom: 8px; }
     .badge { font-size: 0.72rem; padding: 2px 6px; background: #FFE8D6; color: #D9480F; border-radius: 4px; display: inline-block; }
     
-    /* 底部聯絡區塊固定在側邊欄最下方，不被擠掉 */
-    .sidebar-footer { padding: 12px; text-align: center; font-size: 0.82rem; border-top: 1px solid var(--border-color); color: #6c757d; background: #fff; flex-shrink: 0; }
-
+    /* 讓地圖佔滿整個背景，手機也會在側邊欄下方展開 */
     #map { flex: 1; height: 100%; width: 100%; }
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
     .modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
     .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; }
     .form-btns { display: flex; gap: 8px; justify-content: flex-end; }
-
-    /* 💡 手機直向排版：上方清單（佔 55%）、下方地圖（佔 45%），底部聯絡資訊永遠清晰可見 */
-    @media (max-width: 768px) {
-      body { flex-direction: column; height: 100dvh; }
-      #sidebar { 
-        position: relative; 
-        width: 100%; 
-        height: 55vh; 
-        transform: none !important;
-      }
-      #sidebar.collapsed { transform: none !important; }
-      #toggleSidebarBtn { display: none; }
-      #map { 
-        width: 100%; 
-        height: 45vh; 
-      }
-    }
   </style>
 </head>
 <body>
 
+  <!-- 側邊欄容器 -->
   <div id="sidebar">
     <div class="header">
       <h1>🐶 PetMap HK 寵物地圖</h1>
@@ -139,16 +125,18 @@
     <!-- 地點清單 -->
     <div id="placeList" class="place-list"></div>
 
-    <!-- 底部聯絡資訊（固定在側邊欄最下方） -->
-    <div class="sidebar-footer">
+    <!-- 側邊欄底部：只保留簡潔的文字提示與 IG 連結 -->
+    <div style="padding: 12px; text-align: center; font-size: 0.85rem; border-top: 1px solid var(--border-color); color: #6c757d; background: #fff;">
       有任何建議？歡迎追蹤並私訊 <a href="https://www.instagram.com/petmap_hk?stkn=MTV5dGk3aGt4aDdjMw%3D%3D&utm_source=qr" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: none;">@petmap_hk</a>
     </div>
   </div>
 
+  <!-- 獨立的收起/展開按鈕 -->
   <button id="toggleSidebarBtn" onclick="toggleSidebar()">◀</button>
 
   <div id="map"></div>
 
+  <!-- 新增地點 Modal -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <h2>新增 / 推薦寵物友善地點</h2>
@@ -180,6 +168,7 @@
     let allPlaces = [];
     let currentCategory = 'all';
 
+    // 初始化地圖
     function initMap() {
       map = L.map('map').setView([22.3193, 114.1694], 11);
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -190,13 +179,20 @@
       loadPlacesFromSupabase();
     }
 
+    // 側邊欄收起/展開切換函數
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const btn = document.getElementById('toggleSidebarBtn');
       sidebar.classList.toggle('collapsed');
-      btn.innerHTML = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+      
+      if (sidebar.classList.contains('collapsed')) {
+        btn.innerHTML = '▶';
+      } else {
+        btn.innerHTML = '◀';
+      }
     }
 
+    // 從 Supabase 讀取 approved 資料
     async function loadPlacesFromSupabase() {
       const { data, error } = await supabaseClient
         .from('places')
@@ -212,6 +208,7 @@
       filterPlaces();
     }
 
+    // 地區對應判斷 (18區歸類為 港島/九龍/新界)
     function getRegion(district) {
       if (!district) return '';
       const hk = ['中西區', '灣仔區', '東區', '南區'];
@@ -224,6 +221,7 @@
       return '';
     }
 
+    // 類別按鈕切換
     function setCategoryFilter(category, btnElement) {
       document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
       btnElement.classList.add('active');
@@ -231,6 +229,7 @@
       filterPlaces();
     }
 
+    // 綜合篩選（搜尋 + 類別 + 地區）
     function filterPlaces() {
       const searchVal = document.getElementById('searchInput').value.toLowerCase();
       const selectedRegion = document.getElementById('regionSelect').value;
@@ -248,6 +247,7 @@
       renderListAndMarkers(filtered);
     }
 
+    // 渲染清單與地圖標記
     function renderListAndMarkers(places) {
       const listEl = document.getElementById('placeList');
       listEl.innerHTML = '';
@@ -279,13 +279,15 @@
       });
     }
 
+    // Modal 控制
     function openModal() { document.getElementById('modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
+    // 提交新地點至 Supabase
     async function submitPlace() {
       const name = document.getElementById('addName').value;
       const category = document.getElementById('addCategory').value;
-      const district = document.getElementById('addDistrict', '').value;
+      const district = document.getElementById('addDistrict').value;
       const address = document.getElementById('addAddress').value;
       const lat = parseFloat(document.getElementById('addLat').value);
       const lng = parseFloat(document.getElementById('addLng').value);
