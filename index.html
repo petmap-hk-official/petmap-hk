@@ -73,7 +73,7 @@
 
     .header { padding: 16px; background: var(--primary-color); color: white; display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-size: 1.1rem; }
-    .btn-add { background: white; color: var(--primary-color); border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; }
+    .btn-add { background: white; color: var(--primary-color); border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; }
     .controls { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; }
     .search-input { width: 100%; padding: 10px 14px; border: 1px solid #CED4DA; border-radius: 8px; outline: none; }
     .filter-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -101,9 +101,7 @@
   <div id="sidebar">
     <div class="header">
       <h1>🐶 PetMap HK 寵物地圖</h1>
-      <div style="display: flex; gap: 6px;">
-        <button class="btn-add" onclick="openModal()">+ 推薦地點</button>
-      </div>
+      <button class="btn-add" onclick="openModal()">+ 推薦地點</button>
     </div>
     
     <div class="controls">
@@ -123,9 +121,10 @@
       </div>
     </div>
 
+    <!-- 地點清單 -->
     <div id="placeList" class="place-list"></div>
 
-    <!-- 💡 側邊欄底部聯絡提示區塊 -->
+    <!-- 💡 側邊欄底部：只保留簡潔的文字提示與 IG 連結 -->
     <div style="padding: 12px; text-align: center; font-size: 0.85rem; border-top: 1px solid var(--border-color); color: #6c757d; background: #fff;">
       有任何建議？歡迎追蹤並私訊 <a href="https://www.instagram.com/petmap_hk?stkn=MTV5dGk3aGt4aDdjMw%3D%3D&utm_source=qr" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: none;">@petmap_hk</a>
     </div>
