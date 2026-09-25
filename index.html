@@ -18,6 +18,9 @@
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 引入帶有 places 庫的 Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBi98hcIzG9V18pqrbOSepLJOP6_YPmGxc&libraries=places"></script>
+  
   <style>
     :root { --primary-color: #FF7A00; --bg-light: #F8F9FA; --border-color: #E9ECEF; --text-dark: #212529; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -135,9 +138,16 @@
         <option value="park">公園 / 露天設施</option>
       </select>
       <input type="text" id="addDistrict" placeholder="地區 (如: 葵青區 / 中西區)" required>
-      <input type="text" id="addAddress" placeholder="詳細地址">
-      <input type="number" step="any" id="addLat" placeholder="緯度 Lat (如: 22.3642)" required>
-      <input type="number" step="any" id="addLng" placeholder="經度 Lng (如: 114.1331)" required>
+      
+      <!-- 這裡改用 Google Autocomplete 地址輸入框 -->
+      <input type="text" id="addAddress" placeholder="輸入詳細地址 (自動帶入座標)" required>
+      
+      <!-- 經緯度改為唯讀或隱藏，由系統自動填入 -->
+      <div style="display: flex; gap: 8px;">
+        <input type="number" step="any" id="addLat" placeholder="緯度 Lat" readonly style="background: #f1f3f5;" required>
+        <input type="number" step="any" id="addLng" placeholder="經度 Lng" readonly style="background: #f1f3f5;" required>
+      </div>
+
       <textarea id="addComment" placeholder="推薦理由或備註..."></textarea>
       
       <div class="form-btns">
@@ -185,6 +195,7 @@
     let allPlaces = [];
     let currentCategory = 'all';
     let currentSelectedRestaurant = '';
+    let autocomplete;
 
     function initMap() {
       map = L.map('map').setView([22.3193, 114.1694], 11);
@@ -194,11 +205,39 @@
 
       markersGroup = L.layerGroup().addTo(map);
       loadPlacesFromSupabase();
+      initAutocomplete(); // 初始化 Google 地址自動完成
 
-      // 強制重新計算地圖尺寸，避免灰白畫面
       setTimeout(() => {
         map.invalidateSize();
       }, 300);
+    }
+
+    // 初始化 Google Places Autocomplete
+    function initAutocomplete() {
+      const input = document.getElementById('addAddress');
+      const options = {
+        componentRestrictions: { country: 'hk' }, // 限制香港地區
+        fields: ['geometry', 'formatted_address', 'name'],
+        types: ['geocode', 'establishment']
+      };
+
+      autocomplete = new google.maps.places.Autocomplete(input, options);
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+
+        if (!place.geometry || !place.geometry.location) {
+          alert("找不到該地址的經緯度資訊，請嘗試重新選擇。");
+          return;
+        }
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+
+        // 自動將經緯度填入唯讀欄位
+        document.getElementById('addLat').value = lat;
+        document.getElementById('addLng').value = lng;
+      });
     }
 
     function toggleSidebar() {
@@ -406,8 +445,8 @@
       const lng = parseFloat(document.getElementById('addLng').value);
       const user_comment = document.getElementById('addComment').value;
 
-      if (!name || !lat || !lng) {
-        alert('請填寫完整的地點名稱與經緯度！');
+      if (!name || isNaN(lat) || isNaN(lng)) {
+        alert('請確實輸入地點名稱，並透過下拉選單點選有效的地址以自動帶入經緯度！');
         return;
       }
 
