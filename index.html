@@ -13,7 +13,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PetMap HK - 香港寵物友善地圖</title>
   
-  <!-- 💡 App 主畫面圖標設定 -->
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
 
@@ -24,7 +23,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     body { display: flex; height: 100vh; color: var(--text-dark); overflow: hidden; position: relative; }
     
-    /* 側邊欄與收起動畫（強制鎖定電腦版左右並排架構） */
     #sidebar { 
       width: 380px; 
       height: 100vh; 
@@ -41,12 +39,8 @@
       transform: translateX(0); 
     }
 
-    /* 當側邊欄被收起時，向左平移整個寬度 */
-    #sidebar.collapsed {
-      transform: translateX(-380px);
-    }
+    #sidebar.collapsed { transform: translateX(-380px); }
 
-    /* 淺灰色小三角形按鈕 */
     #toggleSidebarBtn {
       position: fixed;
       left: 380px;
@@ -69,15 +63,8 @@
       justify-content: center;
       transition: left 0.3s ease-in-out, background-color 0.2s;
     }
-
-    #toggleSidebarBtn:hover {
-      background-color: #cbd5e0;
-    }
-
-    /* 當側邊欄收起時，按鈕要跟著移動到畫面的最左邊（left: 0） */
-    #sidebar.collapsed ~ #toggleSidebarBtn {
-      left: 0;
-    }
+    #toggleSidebarBtn:hover { background-color: #cbd5e0; }
+    #sidebar.collapsed ~ #toggleSidebarBtn { left: 0; }
 
     .header { padding: 16px; background: var(--primary-color); color: white; display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-size: 1.1rem; }
@@ -95,23 +82,16 @@
     .place-meta { font-size: 0.82rem; color: #6C757D; margin-bottom: 8px; }
     .badge { font-size: 0.72rem; padding: 2px 6px; background: #FFE8D6; color: #D9480F; border-radius: 4px; display: inline-block; }
     
-    /* 讓地圖佔滿整個背景，手機也會在側邊欄下方展開 */
     #map { flex: 1; height: 100%; width: 100%; }
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
-    .modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
-    .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; }
-    .form-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+    .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
+    .form-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
   </style>
 </head>
 <body>
 
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W3LVQP38"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
-
-  <!-- 側邊欄容器 -->
   <div id="sidebar">
     <div class="header">
       <h1>🐶 PetMap HK 寵物地圖</h1>
@@ -135,18 +115,14 @@
       </div>
     </div>
 
-    <!-- 地點清單 -->
     <div id="placeList" class="place-list"></div>
 
-    <!-- 側邊欄底部：只保留簡潔的文字提示與 IG 連結 -->
     <div style="padding: 12px; text-align: center; font-size: 0.85rem; border-top: 1px solid var(--border-color); color: #6c757d; background: #fff;">
       有任何建議？歡迎追蹤並私訊 <a href="https://www.instagram.com/petmap_hk?stkn=MTV5dGk3aGt4aDdjMw%3D%3D&utm_source=qr" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: none;">@petmap_hk</a>
     </div>
   </div>
 
-  <!-- 獨立的收起/展開按鈕 -->
   <button id="toggleSidebarBtn" onclick="toggleSidebar()">◀</button>
-
   <div id="map"></div>
 
   <!-- 新增地點 Modal -->
@@ -171,6 +147,34 @@
     </div>
   </div>
 
+  <!-- 評論與評分 Modal -->
+  <div id="reviewModal" class="modal">
+    <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+      <h3 id="reviewModalTitle">餐廳評論</h3>
+      
+      <div id="reviewsListContainer" style="margin-bottom: 12px; max-height: 200px; overflow-y: auto; border-bottom: 1px solid #eee; padding-bottom: 8px;"></div>
+
+      <h4>留下你的真實體驗</h4>
+      <input type="text" id="reviewNickname" placeholder="你的暱稱 (例如: 豆豆麻)" required>
+      <select id="reviewStars">
+        <option value="5">⭐⭐⭐⭐⭐ (非常友善！)</option>
+        <option value="4">⭐⭐⭐⭐ (不錯，推推)</option>
+        <option value="3">⭐⭐⭐ (普通)</option>
+        <option value="2">⭐⭐ (麻麻地)</option>
+        <option value="1">⭐ (不太推薦)</option>
+      </select>
+      <textarea id="reviewComment" placeholder="分享一下環境、是否可落地、店員態度等..."></textarea>
+      
+      <label style="font-size: 0.82rem; color: #666; margin-top: 4px;">📸 上傳現場或寵物相片 (選填)：</label>
+      <input type="file" id="reviewImageFile" accept="image/*" style="font-size: 0.8rem; padding: 4px;">
+      
+      <div class="form-btns">
+        <button onclick="closeReviewModal()" style="padding: 6px 12px; background: #ccc; border:none; border-radius:6px; cursor:pointer;">關閉</button>
+        <button onclick="submitReview()" style="padding: 6px 12px; background: var(--primary-color); color:white; border:none; border-radius:6px; cursor:pointer;">送出評論</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const SUPABASE_URL = 'https://jwkuiiqmdvzcziktogyt.supabase.co';
@@ -180,8 +184,8 @@
     let map, markersGroup;
     let allPlaces = [];
     let currentCategory = 'all';
+    let currentSelectedRestaurant = '';
 
-    // 初始化地圖
     function initMap() {
       map = L.map('map').setView([22.3193, 114.1694], 11);
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -190,22 +194,21 @@
 
       markersGroup = L.layerGroup().addTo(map);
       loadPlacesFromSupabase();
+
+      // 強制重新計算地圖尺寸，避免灰白畫面
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 300);
     }
 
-    // 側邊欄收起/展開切換函數
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const btn = document.getElementById('toggleSidebarBtn');
       sidebar.classList.toggle('collapsed');
-      
-      if (sidebar.classList.contains('collapsed')) {
-        btn.innerHTML = '▶';
-      } else {
-        btn.innerHTML = '◀';
-      }
+      btn.innerHTML = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+      setTimeout(() => { map.invalidateSize(); }, 300);
     }
 
-    // 從 Supabase 讀取 approved 資料
     async function loadPlacesFromSupabase() {
       const { data, error } = await supabaseClient
         .from('places')
@@ -216,12 +219,10 @@
         console.error('Error fetching places:', error);
         return;
       }
-
       allPlaces = data || [];
       filterPlaces();
     }
 
-    // 地區對應判斷 (18區歸類為 港島/九龍/新界)
     function getRegion(district) {
       if (!district) return '';
       const hk = ['中西區', '灣仔區', '東區', '南區'];
@@ -234,7 +235,6 @@
       return '';
     }
 
-    // 類別按鈕切換
     function setCategoryFilter(category, btnElement) {
       document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
       btnElement.classList.add('active');
@@ -242,7 +242,6 @@
       filterPlaces();
     }
 
-    // 綜合篩選（搜尋 + 類別 + 地區）
     function filterPlaces() {
       const searchVal = document.getElementById('searchInput').value.toLowerCase();
       const selectedRegion = document.getElementById('regionSelect').value;
@@ -260,7 +259,6 @@
       renderListAndMarkers(filtered);
     }
 
-    // 渲染清單與地圖標記
     function renderListAndMarkers(places) {
       const listEl = document.getElementById('placeList');
       listEl.innerHTML = '';
@@ -286,7 +284,6 @@
         `;
         listEl.appendChild(card);
 
-        // 💡 根據分類設定對應的 Emoji 圖示
         const iconEmoji = place.category === 'restaurant' ? '🍽️' : '🌲';
         const customIcon = L.divIcon({
           html: `<div style="font-size: 20px; line-height: 20px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">${iconEmoji}</div>`,
@@ -296,16 +293,110 @@
         });
 
         const marker = L.marker([place.lat, place.lng], { icon: customIcon })
-          .bindPopup(`<b>${place.name}</b><br>${place.address || ''}<br><a href="${mapsUrl}" target="_blank" style="color:#3182ce; font-weight:bold; display:inline-block; margin-top:4px;">在 Google 地圖中開啟</a>`);
+          .bindPopup(`
+            <div style="min-width: 180px;">
+              <b style="font-size: 1rem;">${place.name}</b><br>
+              <span style="font-size: 0.8rem; color: #666;">${place.address || ''}</span><br>
+              <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <a href="${mapsUrl}" target="_blank" style="flex: 1; text-align: center; padding: 4px; background: #3182ce; color:white; border-radius:4px; text-decoration:none; font-size: 11px;">導航</a>
+                <button onclick="openReviewModal('${place.name.replace(/'/g, "\\'")}')" style="flex: 1; padding: 4px; background: var(--primary-color); color:white; border:none; border-radius:4px; cursor:pointer; font-size: 11px;">評論 💬</button>
+              </div>
+            </div>
+          `);
         markersGroup.addLayer(marker);
       });
     }
 
-    // Modal 控制
     function openModal() { document.getElementById('modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-    // 提交新地點至 Supabase
+    async function openReviewModal(restaurantName) {
+      currentSelectedRestaurant = restaurantName;
+      document.getElementById('reviewModalTitle').innerText = `${restaurantName} - 評論區`;
+      document.getElementById('reviewModal').style.display = 'flex';
+      
+      document.getElementById('reviewNickname').value = '';
+      document.getElementById('reviewComment').value = '';
+      document.getElementById('reviewImageFile').value = '';
+
+      const container = document.getElementById('reviewsListContainer');
+      container.innerHTML = '載入中...';
+
+      const { data, error } = await supabaseClient
+        .from('reviews')
+        .select('*')
+        .eq('restaurant_id', restaurantName)
+        .order('created_at', { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        container.innerHTML = '<div style="color: #888; font-size: 0.85rem; text-align: center; padding: 10px;">暫無評論，快來搶頭香留第一個心得吧！</div>';
+        return;
+      }
+
+      container.innerHTML = data.map(r => `
+        <div style="margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #f1f3f5; font-size: 0.85rem;">
+          <b>${r.nickname}</b> <span style="color: #f59e0b;">${'⭐'.repeat(r.rating_stars)}</span>
+          <p style="margin: 2px 0; color: #444;">${r.comment_text}</p>
+          ${r.image_url ? `<div style="margin-top: 6px;"><img src="${r.image_url}" style="max-width: 100%; max-height: 120px; border-radius: 6px; object-fit: cover;"></div>` : ''}
+          <span style="font-size: 0.75rem; color: #999;">${new Date(r.created_at).toLocaleDateString()}</span>
+        </div>
+      `).join('');
+    }
+
+    function closeReviewModal() {
+      document.getElementById('reviewModal').style.display = 'none';
+    }
+
+    async function submitReview() {
+      const nickname = document.getElementById('reviewNickname').value.trim();
+      const rating_stars = parseInt(document.getElementById('reviewStars').value);
+      const comment_text = document.getElementById('reviewComment').value.trim();
+      const fileInput = document.getElementById('reviewImageFile');
+
+      if (!nickname || !comment_text) {
+        alert('請填寫暱稱與評論內容！');
+        return;
+      }
+
+      let imageUrl = null;
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabaseClient.storage
+          .from('reviews-images')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          alert('相片上傳失敗：' + uploadError.message);
+          return;
+        }
+
+        const { data: publicUrlData } = supabaseClient.storage
+          .from('reviews-images')
+          .getPublicUrl(fileName);
+
+        imageUrl = publicUrlData.publicUrl;
+      }
+
+      const { error } = await supabaseClient.from('reviews').insert([{
+        restaurant_id: currentSelectedRestaurant,
+        nickname,
+        rating_stars,
+        comment_text,
+        image_url: imageUrl
+      }]);
+
+      if (error) {
+        alert('提交失敗：' + error.message);
+      } else {
+        alert('感謝你的分享！評論已成功送出。');
+        openReviewModal(currentSelectedRestaurant); 
+      }
+    }
+
     async function submitPlace() {
       const name = document.getElementById('addName').value;
       const category = document.getElementById('addCategory').value;
